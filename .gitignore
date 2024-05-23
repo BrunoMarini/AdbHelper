@@ -49,6 +49,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+.idea/
 cover/
 
 # Translations
@@ -151,6 +152,9 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Project non versionable folders
+temp
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
