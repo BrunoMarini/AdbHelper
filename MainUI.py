@@ -1,4 +1,5 @@
 from nicegui import ui
+from pathlib import Path
 from CmdHelper import AdbCommandHelper
 from DbHelper import DbHelper
 
@@ -7,14 +8,10 @@ adb = AdbCommandHelper()
 dbHelper = DbHelper()
 table_instance = None
 
-#ui.add_head_html('''<link rel="stylesheet" type="text/css" href="styles.css">''')
-ui.add_css('''
-    .text_alignment_center {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-''')
+ui.add_head_html(
+    "<style>" +
+    open(Path(__file__).parent / "css" / "styles.css").read() +
+    "</style>")
 
 
 def _build_android_database_tab():
@@ -55,23 +52,29 @@ def _build_table_ui(sql_table):
 
 
 def _build_push_pull_tab():
-    with ui.card().classes('col-span-full'), ui.row():
-        ui.image('images/ic_push.png').classes('w-32')
-        ui.label('Push file to device')
+    with (ui.card().classes('w-full'), ui.row()):
+        with ui.column().classes('text_alignment_center'):
+            ui.label('Push file to device')
+            ui.image('images/ic_push.png').classes('w-32')
+        ui.upload(on_upload=lambda e: ui.notify(f'Uploaded {e.name}')).classes('max-w-full')
+
+        dest_path = ui.input(label='Destination Path', placeholder='Type destination path',
+                             on_change=lambda e: dest_path.set_autocomplete(adb.list_related_paths(e.value))
+                             ).props('clearable')
     with ui.card().classes('col-span-full'), ui.row():
         ui.image('images/ic_pull.png').classes('w-32')
         ui.label('Pull file from device')
 
 
 # Header
-with ui.header().style('background-color: #481E14').classes(replace='row items-center') as header:
+with ui.header().classes('header') as header:
     with ui.button(icon='menu').props('flat color=white'):
         with ui.menu() as menu:
             ui.menu_item('Settings')
 
 # Left Drawer
-with ui.left_drawer().style('background-color: #9B3922;').classes('text_center; items-center justify-between'):
-    ui.label('Device List').style('color: #FFFFFF; font-size: 200%; font-weight: 400')
+with ui.left_drawer().classes('left-drawer'):
+    ui.label('Device List').classes('header_text')
 
     with ui.expansion('Select your Device', icon='work').classes('w-full'):
         devices = adb.list_devices()
@@ -105,4 +108,4 @@ with ui.tab_panels(tabs, value=one).classes('w-full'):
     with ui.tab_panel(two):
         _build_push_pull_tab()
 
-ui.run(dark=True)
+ui.run(title='Adb Helper', dark=True)
