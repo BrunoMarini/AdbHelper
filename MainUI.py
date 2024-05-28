@@ -5,19 +5,31 @@ from DbHelper import DbHelper
 selectedDevice = ""
 adb = AdbCommandHelper()
 dbHelper = DbHelper()
+table_instance = None
+
+#ui.add_head_html('''<link rel="stylesheet" type="text/css" href="styles.css">''')
+ui.add_css('''
+    .text_alignment_center {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+''')
 
 
 def _build_android_database_tab():
-    with ui.grid(rows=2, columns='1fr 1fr 1fr 1fr').classes('w-full'):
-        ui.label('Select Database').style('display: flex;justify-content: center;align-items: center;')
+    with ui.grid(rows='1fr 5fr', columns='1fr 1fr 1fr 1fr').classes('w-full'):
+        ui.label('Select Database').classes('text_alignment_center')
         ui.select(options=adb.list_available_db(), with_input=True,
                   on_change=lambda e: table.set_options(dbHelper.load_db(adb.pull_db(e.value)), value=1))
-        ui.label('Select Table').style('display: flex;justify-content: center;align-items: center;')
+        ui.label('Select Table').classes('text_alignment_center')
         table = ui.select([], with_input=True, on_change=lambda e: _build_table_ui(e.value))
 
 
-def _build_table_ui(table):
-    table = dbHelper.query_table(table)
+def _build_table_ui(sql_table):
+    global table_instance
+
+    table = dbHelper.query_table(sql_table)
     columns = table[0]
     db_columns = []
     for column in columns:
@@ -30,13 +42,25 @@ def _build_table_ui(table):
             table_dic[col] = row[i]
         db_rows.append(table_dic)
 
-    table = ui.table(columns=db_columns, rows=db_rows).classes('col-span-full')
-    with table.add_slot('top-right'):
+    if table_instance is not None:
+        table_instance.delete()
+
+    table_instance = ui.table(columns=db_columns, rows=db_rows).classes('col-span-full')
+    with table_instance.add_slot('top-right'):
         def toggle() -> None:
-            table.toggle_fullscreen()
-            button.props('icon=fullscreen_exit' if table.is_fullscreen else 'icon=fullscreen')
+            table_instance.toggle_fullscreen()
+            button.props('icon=fullscreen_exit' if table_instance.is_fullscreen else 'icon=fullscreen')
 
         button = ui.button('Toggle fullscreen', icon='fullscreen', on_click=toggle).props('flat')
+
+
+def _build_push_pull_tab():
+    with ui.card().classes('col-span-full'), ui.row():
+        ui.image('images/ic_push.png').classes('w-32')
+        ui.label('Push file to device')
+    with ui.card().classes('col-span-full'), ui.row():
+        ui.image('images/ic_pull.png').classes('w-32')
+        ui.label('Pull file from device')
 
 
 # Header
@@ -79,6 +103,6 @@ with ui.tab_panels(tabs, value=one).classes('w-full'):
     with ui.tab_panel(one):
         _build_android_database_tab()
     with ui.tab_panel(two):
-        ui.label('Second tab')
+        _build_push_pull_tab()
 
 ui.run(dark=True)

@@ -10,6 +10,9 @@ class AdbCommandHelper:
         self.selected_device = device
 
     def _run_adb(self, command):
+        if not self.list_devices():
+            return ["There's no devices connected"]
+
         device = ""
         if self.selected_device:
             device = f" -s {self.selected_device}"
@@ -20,7 +23,8 @@ class AdbCommandHelper:
 
     # Return a Pair with Device ID and Device Status
     def list_devices(self):
-        result = self._run_adb("devices")
+        result = cmd.check_output("adb devices").splitlines()
+        result = [line.decode('utf-8') for line in result if line and len(line) > 0]
         del result[0]
         return [tuple(device.split('\t')) for device in result]
 
